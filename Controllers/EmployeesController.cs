@@ -180,6 +180,25 @@ public class EmployeesController : ControllerBase
         return Ok(ApiResponse.Ok(emp.IsActive ? "Đã kích hoạt." : "Đã vô hiệu hóa."));
     }
 
+    [HttpPatch("me/bank")]
+    [Authorize(Roles = "Employee,Manager,Admin")]
+    public async Task<IActionResult> UpdateMyBank([FromBody] UpdateEmployeeBankDto dto)
+    {
+        var empId = await GetCurrentEmployeeIdAsync();
+        if (empId == null) return NotFound(ApiResponse.Fail("Tài khoản chưa liên kết nhân viên."));
+        return await UpdateBankInternal(empId.Value, dto);
+    }
+
+    [HttpPatch("{id:int}/bank")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> UpdateBank(int id, [FromBody] UpdateEmployeeBankDto dto)
+    {
+        var scope = new UserStoreScope(_db, User);
+        if (!await scope.CanAccessEmployeeAsync(id))
+            return StatusCode(403, ApiResponse.Fail("Không có quyền sửa nhân viên này."));
+        return await UpdateBankInternal(id, dto);
+    }
+
     [HttpGet("me/salary-history")]
     public async Task<IActionResult> GetMySalaryHistory()
     {
@@ -243,6 +262,26 @@ public class EmployeesController : ControllerBase
             .Where(e => e.UserId == CurrentUserId)
             .Select(e => (int?)e.Id)
             .FirstOrDefaultAsync();
+    }
+
+    private async Task<IActionResult> UpdateBankInternal(int empId, UpdateEmployeeBankDto dto)
+    {
+        var emp = await _db.Employees.FindAsync(empId);
+        if (emp == null) return NotFound(ApiResponse.Fail("Không tìm thấy nhân viên."));
+
+        emp.BankAccountNo = string.IsNullOrWhiteSpace(dto.BankAccountNo) ? null : dto.BankAccountNo.Trim();
+        emp.BankName = string.IsNullOrWhiteSpace(dto.BankName) ? null : dto.BankName.Trim();
+        emp.BankAccountName = string.IsNullOrWhiteSpace(dto.BankAccountName) ? null : dto.BankAccountName.Trim();
+        emp.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        var loaded = await _db.Employees
+            .Include(e => e.User)
+            .Include(e => e.EmployeeStores).ThenInclude(es => es.Store)
+            .Include(e => e.SalaryCoefficients)
+            .FirstAsync(e => e.Id == empId);
+
+        return Ok(ApiResponse<EmployeeDto>.Ok(MapDto(loaded), "Đã lưu thông tin ngân hàng."));
     }
 
     private async Task<IActionResult> GetSalaryHistoryInternal(int employeeId, bool includeActor)

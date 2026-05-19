@@ -48,6 +48,13 @@ public class CreateEmployeeDto
     public decimal? Coefficient { get; set; }
 }
 
+public class UpdateEmployeeBankDto
+{
+    public string? BankAccountNo { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountName { get; set; }
+}
+
 public class UpdateEmployeeDto
 {
     public string FullName { get; set; } = "";

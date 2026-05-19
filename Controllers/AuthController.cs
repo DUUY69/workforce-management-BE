@@ -58,7 +58,10 @@ public class AuthController : ControllerBase
             role = user.Role,
             fullName = user.Employee?.FullName ?? user.Username,
             employeeId = user.Employee?.Id,
-            employeeCode = user.Employee?.EmployeeCode
+            employeeCode = user.Employee?.EmployeeCode,
+            bankAccountNo = user.Employee?.BankAccountNo,
+            bankName = user.Employee?.BankName,
+            bankAccountName = user.Employee?.BankAccountName,
         }));
     }
 }
