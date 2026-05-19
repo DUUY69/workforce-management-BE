@@ -25,17 +25,7 @@ public class PayrollService
         if (store.StandardWorkHoursPerDay <= 0)
             throw new InvalidOperationException("Cửa hàng chưa cấu hình giờ công chuẩn/ngày trong DB.");
 
-        // Lấy tất cả nhân viên thuộc store
-        var employeeIds = await _db.EmployeeStores
-            .Where(es => es.StoreId == req.StoreId)
-            .Select(es => es.EmployeeId)
-            .ToListAsync();
-
-        var employees = await _db.Employees
-            .Where(e => employeeIds.Contains(e.Id) && e.IsActive)
-            .ToListAsync();
-
-        // Lấy attendance trong tháng
+        // Chấm công tại cửa hàng này trong tháng (nguồn tính lương — không gắn 1 NV / 1 CH)
         var dateFrom = new DateOnly(req.Year, req.Month, 1);
         var dateTo = dateFrom.AddMonths(1).AddDays(-1);
 
@@ -46,7 +36,15 @@ public class PayrollService
                 && a.CheckOut != null)
             .ToListAsync();
 
-        // Lấy salary coefficients
+        var employeeIds = attendances.Select(a => a.EmployeeId).Distinct().ToList();
+        if (employeeIds.Count == 0)
+            throw new InvalidOperationException(
+                $"Không có chấm công «Đi làm» đã ra ca tại cửa hàng này trong tháng {req.Month}/{req.Year}.");
+
+        var employees = await _db.Employees
+            .Where(e => employeeIds.Contains(e.Id) && e.IsActive)
+            .ToListAsync();
+
         var coefficients = await _db.SalaryCoefficients
             .Where(sc => employeeIds.Contains(sc.EmployeeId) && sc.EffectiveFrom <= dateFrom)
             .OrderByDescending(sc => sc.EffectiveFrom)
@@ -77,6 +75,8 @@ public class PayrollService
         foreach (var emp in employees)
         {
             var empAttendances = attendances.Where(a => a.EmployeeId == emp.Id).ToList();
+            if (empAttendances.Count == 0) continue;
+
             var workedDays = empAttendances.Count;
             var workedHours = empAttendances.Sum(a => a.WorkedHours);
             var overtimeHours = empAttendances.Sum(a => a.OvertimeHours);
