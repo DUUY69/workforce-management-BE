@@ -16,7 +16,8 @@ dotnet run --urls http://localhost:5001
 
 1. `Database/postgres/01_schema.sql`
 2. `Database/postgres/02_seed.sql`
-3. `POST /api/setup/reset-demo-passwords` (BCrypt mật khẩu demo)
+3. `03_seed_10_employees_5_months.sql` → `04_seed_nv001_may19.sql` → `04b_clear_nv001_attendance_may19.sql` → `05_seed_may19_shifts.sql`
+4. `POST /api/setup/reset-demo-passwords` (BCrypt mật khẩu demo)
 
 **SQL Server (legacy, local cũ):**
 
