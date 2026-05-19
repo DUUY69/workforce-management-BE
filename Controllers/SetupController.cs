@@ -29,8 +29,34 @@ public class SetupController : ControllerBase
         var ready = counts.users > 0 && counts.stores > 0;
         var message = ready
             ? "DB đã có dữ liệu. Quản lý qua app hoặc script SQL."
-            : "DB trống. Chạy Database/01_Schema.sql rồi 02_SeedData.sql hoặc 03_SeedData_Real.sql.";
+            : "DB trống. Chạy Database/postgres/01_schema.sql rồi 02_seed.sql (PostgreSQL).";
         return Ok(ApiResponse<object>.Ok(new { counts, ready }, message));
+    }
+
+    /// <summary>Đặt lại mật khẩu demo sau seed SQL (BCrypt thật).</summary>
+    [HttpPost("reset-demo-passwords")]
+    public async Task<IActionResult> ResetDemoPasswords()
+    {
+        var map = new Dictionary<string, string>
+        {
+            ["admin"] = "Admin@123",
+            ["manager1"] = "Manager@123",
+            ["nv001"] = "Employee@123",
+            ["nv002"] = "Employee@123",
+            ["nv003"] = "Employee@123",
+        };
+
+        var updated = new List<string>();
+        foreach (var (username, password) in map)
+        {
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username);
+            if (user == null) continue;
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+            updated.Add(username);
+        }
+
+        await _db.SaveChangesAsync();
+        return Ok(ApiResponse.Ok($"Đã cập nhật BCrypt cho: {string.Join(", ", updated)}"));
     }
 
     /// <summary>Tạo tài khoản Admin đầu tiên (khi chưa có admin).</summary>

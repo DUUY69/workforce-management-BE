@@ -15,6 +15,7 @@ services:
         value: http://0.0.0.0:10000
       - key: ConnectionStrings__DefaultConnection
         sync: false
+        # PostgreSQL: Host=...;Port=5432;Database=workforce;Username=...;Password=...
       - key: Jwt__Key
         sync: false
       - key: Jwt__Issuer

@@ -10,10 +10,17 @@ cp appsettings.Development.json.example appsettings.Development.json
 dotnet run --urls http://localhost:5001
 ```
 
-## Script DB (`Database/`, thứ tự)
+## Script DB
 
-1. `01_Schema.sql`
-2. `02_SeedData.sql` hoặc `03_SeedData_Real.sql`
+**PostgreSQL (khuyên dùng — VPS / Docker):**
+
+1. `Database/postgres/01_schema.sql`
+2. `Database/postgres/02_seed.sql`
+3. `POST /api/setup/reset-demo-passwords` (BCrypt mật khẩu demo)
+
+**SQL Server (legacy, local cũ):**
+
+1. `01_Schema.sql` → `03_SeedData_Real.sql` …
 3. `04_Align_Attendance_Status.sql`
 4. `05_Store_Work_Settings.sql`
 5. `06_Salary_Per_Hour.sql`

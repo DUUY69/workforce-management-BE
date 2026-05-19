@@ -21,6 +21,19 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
+        mb.Entity<User>().ToTable("Users");
+        mb.Entity<Employee>().ToTable("Employees");
+        mb.Entity<Store>().ToTable("Stores");
+        mb.Entity<EmployeeStore>().ToTable("EmployeeStores");
+        mb.Entity<Shift>().ToTable("Shifts");
+        mb.Entity<ShiftRegistration>().ToTable("ShiftRegistrations");
+        mb.Entity<Attendance>().ToTable("Attendances");
+        mb.Entity<SalaryCoefficient>().ToTable("SalaryCoefficients");
+        mb.Entity<Payroll>().ToTable("Payrolls");
+        mb.Entity<PayrollDetail>().ToTable("PayrollDetails");
+        mb.Entity<Payment>().ToTable("Payments");
+        mb.Entity<RefreshToken>().ToTable("RefreshTokens");
+
         // User
         mb.Entity<User>(e =>
         {
