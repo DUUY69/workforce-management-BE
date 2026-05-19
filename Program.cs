@@ -15,8 +15,10 @@ if (!string.IsNullOrEmpty(port))
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // ── Database ──────────────────────────────────────────────────────────────────
-builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!string.IsNullOrEmpty(connStr) && !connStr.Contains("Encoding=", StringComparison.OrdinalIgnoreCase))
+    connStr += ";Encoding=UTF8";
+builder.Services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(connStr));
 
 // ── JWT Auth ──────────────────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"]!;
