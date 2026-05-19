@@ -52,6 +52,13 @@ public class MarkAbsentDto
     public string? Note { get; set; }
 }
 
+/// <summary>Xác nhận chấm công từ ca đăng ký đã duyệt (không nhập giờ tay).</summary>
+public class ConfirmShiftAttendanceDto
+{
+    public int ShiftRegistrationId { get; set; }
+    public bool Worked { get; set; }
+}
+
 public class AttendanceSummaryDto
 {
     public int EmployeeId { get; set; }

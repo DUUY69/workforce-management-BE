@@ -24,3 +24,7 @@ dotnet run --urls http://localhost:5001
 Tài khoản demo (sau seed `03`): `admin` / `Admin@123`, `manager1` / `Manager@123`, `nv001` / `Employee@123`.
 
 Frontend: [workforce-management-FE](https://github.com/DUUY69/workforce-management-FE)
+
+## Deploy (Render)
+
+Xem [DEPLOY.md](./DEPLOY.md) — biến môi trường: `ConnectionStrings__DefaultConnection`, `Jwt__Key`, `Cors__Origins`. Health: `GET /health`.

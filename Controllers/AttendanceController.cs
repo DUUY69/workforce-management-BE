@@ -161,12 +161,74 @@ public class AttendanceController : ControllerBase
         return Ok(ApiResponse<List<AttendanceSummaryDto>>.Ok(summary));
     }
 
-    /// <summary>Đã tắt tự chấm — quản lý dùng POST /attendance (Nhập giờ).</summary>
+    /// <summary>Xác nhận Đi làm / Không đi làm theo ca đã duyệt (giờ lấy từ đăng ký ca).</summary>
+    [HttpPost("confirm-shift")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> ConfirmShift([FromBody] ConfirmShiftAttendanceDto dto)
+    {
+        var reg = await _db.ShiftRegistrations
+            .Include(r => r.Employee)
+            .Include(r => r.Store)
+            .FirstOrDefaultAsync(r => r.Id == dto.ShiftRegistrationId);
+        if (reg == null) return NotFound(ApiResponse.Fail("Không tìm thấy đăng ký ca."));
+        if (reg.Status != "Approved")
+            return BadRequest(ApiResponse.Fail("Chỉ xác nhận chấm công cho ca đã duyệt."));
+
+        var scope = new UserStoreScope(_db, User);
+        if (!await scope.CanAccessStoreAsync(reg.StoreId) || !await scope.CanAccessEmployeeAsync(reg.EmployeeId))
+            return StatusCode(403, ApiResponse.Fail("Không có quyền thao tác cửa hàng/nhân viên này."));
+
+        if (reg.WorkDate > DateOnly.FromDateTime(DateTime.Today))
+            return BadRequest(ApiResponse.Fail("Không thể chấm công cho ngày tương lai."));
+
+        var duplicate = await _db.Attendances.AnyAsync(a =>
+            a.EmployeeId == reg.EmployeeId && a.StoreId == reg.StoreId && a.WorkDate == reg.WorkDate);
+        if (duplicate) return BadRequest(ApiResponse.Fail("Đã chấm công cho nhân viên này ngày này."));
+
+        Attendance attendance;
+        if (dto.Worked)
+        {
+            var standard = await AttendanceRules.GetStandardHoursAsync(
+                _db, reg.EmployeeId, reg.StoreId, reg.WorkDate);
+            attendance = new Attendance
+            {
+                EmployeeId = reg.EmployeeId,
+                StoreId = reg.StoreId,
+                WorkDate = reg.WorkDate,
+                CreatedBy = CurrentUserId
+            };
+            AttendanceRules.ApplyWorkedTimes(attendance, reg.StartTime, reg.EndTime, standard);
+        }
+        else
+        {
+            attendance = new Attendance
+            {
+                EmployeeId = reg.EmployeeId,
+                StoreId = reg.StoreId,
+                WorkDate = reg.WorkDate,
+                CheckIn = new TimeOnly(0, 0),
+                CheckOut = new TimeOnly(0, 1),
+                Status = AttendanceStatuses.Absent,
+                OvertimeHours = 0,
+                CreatedBy = CurrentUserId
+            };
+        }
+
+        _db.Attendances.Add(attendance);
+        await _db.SaveChangesAsync();
+        await _db.Entry(attendance).Reference(a => a.Employee).LoadAsync();
+        await _db.Entry(attendance).Reference(a => a.Store).LoadAsync();
+
+        var msg = dto.Worked ? "Đã xác nhận đi làm." : "Đã xác nhận không đi làm.";
+        return Ok(ApiResponse<AttendanceDto>.Ok(await MapDtoAsync(attendance), msg));
+    }
+
+    /// <summary>Đã tắt tự chấm — quản lý xác nhận qua confirm-shift.</summary>
     [HttpPost("check-in")]
     [Authorize]
     public IActionResult CheckIn([FromBody] CheckInDto dto)
     {
-        return StatusCode(403, ApiResponse.Fail("Nhân viên không được tự chấm công. Quản lý nhập giờ vào/ra qua «Nhập giờ»."));
+        return StatusCode(403, ApiResponse.Fail("Nhân viên không được tự chấm công. Quản lý xác nhận Đi làm / Không đi làm trên màn Chấm công."));
     }
 
     [HttpPost("{id:int}/check-out")]
