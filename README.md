@@ -16,7 +16,7 @@ dotnet run --urls http://localhost:5001
 
 1. `Database/postgres/01_schema.sql`
 2. `Database/postgres/02_seed.sql`
-3. `03_seed_10_employees_5_months.sql` → `04_seed_nv001_may19.sql` → `04b_clear_nv001_attendance_may19.sql` → `05_seed_may19_shifts.sql`
+3. `03_seed_10_employees_5_months.sql` → `04` → `04b` → `05` → `07_seed_bank_accounts.sql`
 4. `POST /api/setup/reset-demo-passwords` (BCrypt mật khẩu demo)
 
 **SQL Server (legacy, local cũ):**
@@ -28,6 +28,7 @@ dotnet run --urls http://localhost:5001
 6. `07_Seed_Demo_Data.sql`
 7. `08_ShiftRegistration_CustomTimes.sql`
 8. `09_Seed_10_Employees_5_Months.sql`
+9. `12_Seed_Bank_Accounts.sql` — STK ngân hàng demo (NV001–NV014)
 
 Tài khoản demo (sau seed `03`): `admin` / `Admin@123`, `manager1` / `Manager@123`, `nv001` / `Employee@123`.
 
