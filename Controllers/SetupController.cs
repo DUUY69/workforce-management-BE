@@ -37,22 +37,18 @@ public class SetupController : ControllerBase
     [HttpPost("reset-demo-passwords")]
     public async Task<IActionResult> ResetDemoPasswords()
     {
-        var map = new Dictionary<string, string>
-        {
-            ["admin"] = "Admin@123",
-            ["manager1"] = "Manager@123",
-            ["nv001"] = "Employee@123",
-            ["nv002"] = "Employee@123",
-            ["nv003"] = "Employee@123",
-        };
-
         var updated = new List<string>();
-        foreach (var (username, password) in map)
+        var users = await _db.Users.ToListAsync();
+        foreach (var user in users)
         {
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username);
-            if (user == null) continue;
+            var password = user.Role switch
+            {
+                "Admin" => "Admin@123",
+                "Manager" => "Manager@123",
+                _ => "Employee@123"
+            };
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
-            updated.Add(username);
+            updated.Add(user.Username);
         }
 
         await _db.SaveChangesAsync();
